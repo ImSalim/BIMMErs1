@@ -1,0 +1,274 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BIMMers - Cloud</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-top: 5px solid #006400;
+            border-bottom: 5px solid #006400;
+        }
+
+        .titulo {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .bienvenida {
+            font-size: 16px;
+        }
+
+        .contenedor {
+            padding: 20px;
+            border-top: 5px solid #006400;
+            border-bottom: 5px solid #006400;
+            min-height: 70vh;
+        }
+
+        .seccion {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+            .seccion h3 {
+                background-color: #e0f0ff;
+                padding: 10px 15px;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 18px;
+            }
+
+        .btn-nuevo {
+            background-color: #f4a261;
+            border: none;
+            padding: 10px 15px;
+            font-weight: bold;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .lista-proyectos {
+            list-style-type: disc;
+            margin-left: 25px;
+            font-size: 16px;
+        }
+
+        .buscar {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+            .buscar input {
+                padding: 6px 10px;
+                border: 1px solid #888;
+                border-radius: 4px;
+                margin-right: 10px;
+                color: #aaa;
+            }
+
+            .buscar button {
+                background-color: #eee;
+                border: 1px solid #555;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-weight: bold;
+                color: #888;
+            }
+
+        footer {
+            text-align: right;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        #modalProyecto {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="titulo">BIMMers - Cloud</div>
+        <div class="bienvenida">Bienvenido: Usuario CABACOR BIM</div>
+    </header>
+
+    <div class="contenedor">
+        <div class="seccion">
+            <h3>Proyectos:</h3>
+            <button class="btn-nuevo" onclick="crearProyecto()">Nuevo Proyecto</button>
+        </div>
+
+        <ul class="lista-proyectos" id="listaProyectos">
+            <!-- Los proyectos se cargarán aquí -->
+        </ul>
+
+        <div class="buscar">
+            <input type="text" id="busqueda" placeholder="Buscar Proyecto" disabled />
+            <button disabled>Buscar Proyecto</button>
+        </div>
+    </div>
+
+    <footer>
+        Administrar Plataforma
+    </footer>
+
+    <script>
+        const API_URL = 'https://localhost:7271/api/proyectos'; // Ajusta según tu puerto real
+
+        // ✅ Carga los proyectos al iniciar
+        async function cargarProyectos() {
+            try {
+                const response = await fetch(API_URL);
+                const proyectos = await response.json();
+                const lista = document.getElementById('listaProyectos');
+                lista.innerHTML = '';
+
+                proyectos.forEach(p => {
+                    const li = document.createElement('li');
+                    li.textContent = p.nombre;
+                    li.style.cursor = 'pointer';
+                    li.addEventListener('click', () => {
+                        console.log(`Click en proyecto ${p.id}`);
+                        window.location.href = `proyecto.html?id=${p.id}`;
+                    });
+                    lista.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error al cargar proyectos:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', cargarProyectos);
+
+        function agregarProyectoALaLista(id, nombre) {
+            const lista = document.getElementById('listaProyectos');
+
+            const nuevoLi = document.createElement('li');
+            nuevoLi.textContent = nombre;
+            nuevoLi.style.cursor = 'pointer';
+            nuevoLi.addEventListener('click', () => {
+                console.log(`Click en proyecto ${id}`);
+                window.location.href = `proyecto.html?id=${id}`;
+            });
+
+            const items = Array.from(lista.children);
+            const index = items.findIndex(li => li.textContent.toLowerCase() > nombre.toLowerCase());
+
+            if (index === -1) {
+                lista.appendChild(nuevoLi);
+            } else {
+                lista.insertBefore(nuevoLi, items[index]);
+            }
+        }
+
+        function crearProyecto() {
+            document.getElementById('modalProyecto').style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalProyecto').style.display = 'none';
+            document.getElementById('nombreProyecto').value = '';
+            document.getElementById('codigoProyecto').value = '';
+            document.getElementById('tipoProyecto').value = '';
+            document.getElementById('ubicacionProyecto').value = '';
+        }
+
+        async function crearProyectoDesdeModal() {
+            const nombre = document.getElementById('nombreProyecto').value.trim();
+            const codigo = document.getElementById('codigoProyecto').value.trim();
+            const tipo = document.getElementById('tipoProyecto').value.trim();
+            const ubicacion = document.getElementById('ubicacionProyecto').value.trim();
+
+            if (!nombre || !codigo || !tipo || !ubicacion) {
+                alert("Todos los campos son obligatorios.");
+                return;
+            }
+
+            const nombresActuales = Array.from(document.getElementById('listaProyectos').children)
+                .map(li => li.textContent.toLowerCase());
+
+            if (nombresActuales.includes(nombre.toLowerCase())) {
+                alert("Ya existe un proyecto con ese nombre.");
+                return;
+            }
+
+            const proyecto = {
+                nombre,
+                codigo,
+                tipo,
+                ubicacion,
+                usuarioPropietario: "Usuario XXXX"
+            };
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(proyecto)
+                });
+
+                if (res.ok) {
+                    const data = await res.json(); // 👈 esto obtiene el ID y el nombre
+                    cerrarModal();
+                    agregarProyectoALaLista(data.id, data.nombre); // 👈 pasar ID y nombre
+                } else {
+                    alert("Error al crear proyecto");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error en la conexión con el servidor.");
+            }
+        }
+    </script>
+
+    <!-- Modal completo para crear nuevo proyecto -->
+    <div id="modalProyecto" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:#fff; padding:30px; border-radius:10px; width:350px; border:1px solid #002;">
+            <h2 style="text-align:center; margin-bottom:20px;">BIMMers - Proyecto</h2>
+
+            <label>Nombre del Proyecto:</label>
+            <input type="text" id="nombreProyecto" style="width:100%; margin-bottom:10px;" />
+
+            <label>Código del Proyecto:</label>
+            <input type="text" id="codigoProyecto" style="width:100%; margin-bottom:10px;" />
+
+            <label>Tipo del Proyecto:</label>
+            <input type="text" id="tipoProyecto" style="width:100%; margin-bottom:10px;" />
+
+            <label>Ubicación del Proyecto:</label>
+            <input type="text" id="ubicacionProyecto" style="width:100%; margin-bottom:20px;" />
+
+            <div style="text-align:right;">
+                <button onclick="cerrarModal()" style="color:#e74c3c; font-weight:bold; margin-right:10px;">Cancel</button>
+                <button onclick="crearProyectoDesdeModal()" style="color:green; font-weight:bold;">Crear</button>
+                
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
